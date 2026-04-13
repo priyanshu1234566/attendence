@@ -1,12 +1,14 @@
 let count = 0;
 
-/* ✅ DOM Load Safe */
+/* ✅ DOM Load */
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("addBtn").addEventListener("click", addRow);
+    loadData();        // main table
+    loadOutputData();  // output table (🔥 new)
 });
 
 /* ✅ Add Row */
-function addRow() {
+function addRow(data = {}) {
     count++;
 
     let tbody = document.getElementById("tbody");
@@ -14,19 +16,22 @@ function addRow() {
 
     tr.innerHTML = `
         <td>${count}</td>
-        <td><input type="text" placeholder="Name"></td>
-        <td><input type="text" placeholder="Class"></td>
-        <td><input type="text" placeholder="Roll"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
-        <td><input type="text" maxlength="1" placeholder="P/A" class="att"></td>
+        <td><input type="text" value="${data.name || ''}" placeholder="Name"></td>
+        <td><input type="text" value="${data.className || ''}" placeholder="Class"></td>
+        <td><input type="text" value="${data.roll || ''}" placeholder="Roll"></td>
+
+        ${[0,1,2,3,4,5].map(i => `
+            <td>
+                <input type="checkbox" class="att-check" ${data.days?.[i] ? "checked" : ""}>
+            </td>
+        `).join("")}
+
         <td class="total">0</td>
+        <td class="percent">0%</td>
     `;
 
     tbody.appendChild(tr);
+    calculate();
 }
 
 /* ✅ Delete Row */
@@ -37,10 +42,11 @@ function deleteRow() {
         tbody.deleteRow(tbody.rows.length - 1);
         count--;
         updateSerial();
+        saveData();
     }
 }
 
-/* ✅ Update Serial Number */
+/* ✅ Update Serial */
 function updateSerial() {
     let rows = document.querySelectorAll("#tbody tr");
     rows.forEach((row, index) => {
@@ -48,46 +54,39 @@ function updateSerial() {
     });
 }
 
-/* ✅ Calculate Total (P Count) */
+/* ✅ Calculate + Color */
 function calculate() {
     let rows = document.querySelectorAll("#tbody tr");
 
     rows.forEach(row => {
-        let inputs = row.querySelectorAll(".att");
+        let checks = row.querySelectorAll(".att-check");
         let present = 0;
 
-        inputs.forEach(input => {
-            let val = input.value.toUpperCase();
-            if (val === "P") present++;
+        checks.forEach(chk => {
+            if (chk.checked) {
+                present++;
+                chk.parentElement.style.background = "#c6f6d5";
+            } else {
+                chk.parentElement.style.background = "#fed7d7";
+            }
         });
+
+        let totalDays = checks.length;
+        let percent = totalDays ? ((present / totalDays) * 100).toFixed(0) : 0;
 
         row.querySelector(".total").innerText = present;
-    });
-}
-
-/* ✅ Download CSV (Main Table Only) */
-function downloadCSV() {
-    let rows = document.querySelectorAll("#table tr");
-    let csv = [];
-
-    rows.forEach(row => {
-        let cols = row.querySelectorAll("td, th");
-        let data = [];
-
-        cols.forEach(col => {
-            let input = col.querySelector("input");
-            data.push(input ? input.value : col.innerText);
-        });
-
-        csv.push(data.join(","));
+        row.querySelector(".percent").innerText = percent + "%";
     });
 
-    let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "attendance.csv";
-    a.click();
+    saveData();
 }
+
+/* ✅ Auto Calculate */
+document.addEventListener("change", function(e) {
+    if (e.target.classList.contains("att-check")) {
+        calculate();
+    }
+});
 
 /* ✅ Search */
 function searchData() {
@@ -120,15 +119,14 @@ function getHeaderData() {
 
         if (!name) return;
 
-        let attInputs = row.querySelectorAll(".att");
-        let totalPresent = 0;
+        let checks = row.querySelectorAll(".att-check");
+        let present = 0;
 
-        attInputs.forEach(i => {
-            if (i.value.toUpperCase() === "P") totalPresent++;
-        });
+        checks.forEach(c => { if (c.checked) present++; });
 
-        let totalDays = attInputs.length;
-        let totalAbsent = totalDays - totalPresent;
+        let totalDays = checks.length;
+        let absent = totalDays - present;
+        let percent = ((present / totalDays) * 100).toFixed(0);
 
         output += `
         <tr>
@@ -138,8 +136,9 @@ function getHeaderData() {
             <td>${name}</td>
             <td>${className}</td>
             <td>${roll}</td>
-            <td>${totalPresent}</td>
-            <td>${totalAbsent}</td>
+            <td>${present}</td>
+            <td>${absent}</td>
+            <td>${percent}%</td>
             <td><button onclick="deleteOutputRow(this)">Delete</button></td>
         </tr>
         `;
@@ -147,16 +146,20 @@ function getHeaderData() {
 
     document.getElementById("outputBody").innerHTML = output;
     document.getElementById("outputBox").style.display = "block";
+
+    saveOutputData(); // 🔥 IMPORTANT
 }
 
 /* ✅ Delete Output Row */
 function deleteOutputRow(btn) {
     btn.parentElement.parentElement.remove();
+    saveOutputData(); // update storage
 }
 
 /* ✅ Clear All Output */
 function clearAllData() {
     document.getElementById("outputBody").innerHTML = "";
+    localStorage.removeItem("outputData");
 }
 
 /* ✅ Filter Toggle */
@@ -185,15 +188,81 @@ function applyFilter() {
     });
 }
 
-/* ✅ P/A Validation + Auto Uppercase */
-document.addEventListener("input", function(e) {
-    if (e.target.classList.contains("att")) {
-        let val = e.target.value.toUpperCase();
+/* ✅ Save Main Table */
+function saveData() {
+    let rows = document.querySelectorAll("#tbody tr");
+    let data = [];
 
-        if (val !== "P" && val !== "A") {
-            e.target.value = "";
-        } else {
-            e.target.value = val;
-        }
+    rows.forEach(row => {
+        let inputs = row.querySelectorAll("input");
+        let checks = row.querySelectorAll(".att-check");
+
+        data.push({
+            name: inputs[0].value,
+            className: inputs[1].value,
+            roll: inputs[2].value,
+            days: Array.from(checks).map(c => c.checked)
+        });
+    });
+
+    localStorage.setItem("attendanceData", JSON.stringify(data));
+}
+
+/* ✅ Load Main Table */
+function loadData() {
+    let data = JSON.parse(localStorage.getItem("attendanceData")) || [];
+    data.forEach(d => addRow(d));
+}
+
+/* ✅ Save Output Table */
+function saveOutputData() {
+    let rows = document.querySelectorAll("#outputBody tr");
+    let data = [];
+
+    rows.forEach(row => {
+        let td = row.querySelectorAll("td");
+
+        data.push({
+            university: td[0].innerText,
+            college: td[1].innerText,
+            course: td[2].innerText,
+            name: td[3].innerText,
+            className: td[4].innerText,
+            roll: td[5].innerText,
+            present: td[6].innerText,
+            absent: td[7].innerText,
+            percent: td[8].innerText
+        });
+    });
+
+    localStorage.setItem("outputData", JSON.stringify(data));
+}
+
+/* ✅ Load Output Table */
+function loadOutputData() {
+    let data = JSON.parse(localStorage.getItem("outputData")) || [];
+
+    let output = "";
+
+    data.forEach(d => {
+        output += `
+        <tr>
+            <td>${d.university}</td>
+            <td>${d.college}</td>
+            <td>${d.course}</td>
+            <td>${d.name}</td>
+            <td>${d.className}</td>
+            <td>${d.roll}</td>
+            <td>${d.present}</td>
+            <td>${d.absent}</td>
+            <td>${d.percent}</td>
+            <td><button onclick="deleteOutputRow(this)">Delete</button></td>
+        </tr>
+        `;
+    });
+
+    if (data.length > 0) {
+        document.getElementById("outputBody").innerHTML = output;
+        document.getElementById("outputBox").style.display = "block";
     }
-});
+}
