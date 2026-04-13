@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>College Attendance</title>
+<title>College Attendance System</title>
 
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:,">
@@ -12,18 +12,19 @@
 <body>
 
 <div class="container">
-    
-    <h2>College Attend</h2>
+
+    <!-- Title -->
+    <h2>📊 College Attendance System</h2>
 
     <!-- Header -->
     <div class="header">
-        <div>
-            Tpr No: 
+        <div class="field">
+            <label>Tpr No:</label>
             <input type="text" placeholder="Enter Tpr No" id="tpr">
         </div>
 
-        <div>
-            Date: 
+        <div class="field">
+            <label>Date:</label>
             <input type="date" id="date">
         </div>
     </div>
@@ -33,70 +34,81 @@
         <input type="text" placeholder="University Name" id="university">
         <input type="text" placeholder="College Name" id="college">
         <input type="text" placeholder="Course Name" id="course">
-        <input type="text" placeholder="Search Student..." id="search" onkeyup="searchData()">
+        <input type="text" placeholder="🔍 Search Student..." id="search" onkeyup="searchData()">
     </div>
 
-    <!-- Main Table -->
-    <table id="table">
-        <thead>
-            <tr>
-                <th>SR.</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Roll</th>
-                <th>M</th>
-                <th>T</th>
-                <th>W</th>
-                <th>Th</th>
-                <th>F</th>
-                <th>Sat</th>
-                <th>Total</th>
-                <th>%</th>
-            </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-    </table>
-
-    <!-- Buttons -->
-    <button class="btn add" id="addBtn">+ Add Student</button>
-    <button class="btn delete" onclick="deleteRow()">Delete</button>
-    <button onclick="calculate(); getHeaderData()">Show Data</button>
-    <div class="download" onclick="downloadCSV()">⬇ Download</div>
-
-    <!-- Output Section -->
-    <div id="outputBox" style="display:none; margin-top:20px;">
-
-        <h3>Student Data</h3>
-
-        <!-- Filter -->
-        <button onclick="toggleFilter()">Filter</button>
-
-        <div id="filterBox" style="display:none; margin:10px 0;">
-            <input type="text" placeholder="Filter by Name" id="filterName" onkeyup="applyFilter()">
-            <input type="text" placeholder="Filter by Class" id="filterClass" onkeyup="applyFilter()">
-            <input type="text" placeholder="Filter by Roll" id="filterRoll" onkeyup="applyFilter()">
-        </div>
-
-        <!-- Output Table -->
-        <table border="1" width="100%" id="outputTable">
+    <!-- Table Wrapper -->
+    <div class="table-wrapper">
+        <table id="table">
             <thead>
                 <tr>
-                    <th>University</th>
-                    <th>College</th>
-                    <th>Course</th>
+                    <th>SR.</th>
                     <th>Name</th>
                     <th>Class</th>
                     <th>Roll</th>
-                    <th>Present</th>
-                    <th>Absent</th>
-                    <th>Action</th> <!-- ✅ Added -->
+                    <th>M</th>
+                    <th>T</th>
+                    <th>W</th>
+                    <th>Th</th>
+                    <th>F</th>
+                    <th>Sat</th>
+                    <th>Total</th>
+                    <th>%</th>
                 </tr>
             </thead>
-            <tbody id="outputBody"></tbody>
+            <tbody id="tbody"></tbody>
         </table>
+    </div>
 
-        <!-- Clear All -->
-        <button onclick="clearAllData()">Clear All Data</button>
+    <!-- Buttons -->
+    <div class="btn-group">
+        <button class="btn add" id="addBtn">+ Add Student</button>
+        <button class="btn delete" onclick="deleteRow()">Delete Row</button>
+        <button class="btn show" onclick="calculate(); getHeaderData()">Show Data</button>
+        <button class="btn download" onclick="downloadCSV()">⬇ Download CSV</button>
+    </div>
+
+    <!-- Output Section -->
+    <div id="outputBox" class="output-box">
+
+        <h3>📋 Student Report</h3>
+
+        <!-- Filter -->
+        <div class="filter-section">
+            <button class="btn filter-btn" onclick="toggleFilter()">🔎 Filter</button>
+
+            <div id="filterBox" class="filter-box">
+                <input type="text" placeholder="Filter by Name" id="filterName" onkeyup="applyFilter()">
+                <input type="text" placeholder="Filter by Class" id="filterClass" onkeyup="applyFilter()">
+                <input type="text" placeholder="Filter by Roll" id="filterRoll" onkeyup="applyFilter()">
+            </div>
+        </div>
+
+        <!-- Output Table -->
+        <div class="table-wrapper">
+            <table id="outputTable">
+                <thead>
+                    <tr>
+                        <th>University</th>
+                        <th>College</th>
+                        <th>Course</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Roll</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                        <th>%</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="outputBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Clear -->
+        <div class="clear-section">
+            <button class="btn clear-btn" onclick="clearAllData()">🗑 Clear All Data</button>
+        </div>
 
     </div>
 
