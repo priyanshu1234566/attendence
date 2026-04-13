@@ -5,11 +5,7 @@
 <title>Admin Panel</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
 
 body{
     font-family: Arial;
@@ -18,65 +14,34 @@ body{
     padding:20px;
 }
 
-/* TOP BAR */
 .topbar{
     display:flex;
     justify-content:space-between;
-    align-items:center;
     margin-bottom:20px;
 }
 
-h2{
-    font-size:22px;
-}
-
-/* BUTTONS */
 button{
     padding:8px 12px;
     border:none;
     cursor:pointer;
     border-radius:6px;
-    transition:0.2s;
 }
 
-.delete{
-    background:#ef4444;
-    color:white;
-}
-.delete:hover{ background:#dc2626; }
+.delete{background:#ef4444;color:#fff;}
+.approve{background:#22c55e;color:#fff;}
+.logout{background:#3b82f6;color:#fff;}
 
-.logout{
-    background:#3b82f6;
-    color:white;
-}
-.logout:hover{ background:#2563eb; }
-
-.clear{
-    background:#f59e0b;
-    color:white;
-    margin-top:10px;
-}
-
-.export{
-    background:#10b981;
-    color:white;
-    margin-left:10px;
-}
-
-/* TABLE */
-.table-box{
-    overflow-x:auto;
-    margin-top:15px;
+.section{
+    margin-top:20px;
+    padding:15px;
+    background:#1e293b;
+    border-radius:10px;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
-    min-width:900px;
-}
-
-th{
-    background:#1e293b;
+    margin-top:10px;
 }
 
 th,td{
@@ -85,36 +50,17 @@ th,td{
     text-align:center;
 }
 
-/* FILTER */
-.filter-box{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-top:10px;
-}
+th{background:#111827;}
+
+.empty{color:#94a3b8;text-align:center;padding:10px;}
 
 .filter{
     padding:8px;
-    border-radius:6px;
+    margin-right:10px;
+    border-radius:5px;
     border:none;
 }
 
-/* SECTION */
-.section{
-    margin-top:30px;
-    padding:15px;
-    background:#1e293b;
-    border-radius:10px;
-}
-
-/* EMPTY */
-.empty{
-    text-align:center;
-    padding:15px;
-    color:#94a3b8;
-}
-
-/* STATS */
 .stats{
     margin-top:10px;
     color:#38bdf8;
@@ -129,104 +75,130 @@ th,td{
     <button class="logout" onclick="logout()">Logout</button>
 </div>
 
-<!-- USERS -->
+<!-- 🔥 APPROVAL SECTION -->
 <div class="section">
-    <h3>👤 Users</h3>
-
-    <div class="table-box">
-        <table>
-            <thead>
-                <tr>
-                    <th>Username</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="userTable"></tbody>
-        </table>
-    </div>
+    <h3>📌 User Approval</h3>
+    <div id="approvalList"></div>
 </div>
 
-<!-- ATTENDANCE -->
+<!-- 👤 USERS TABLE -->
 <div class="section">
-    <h3>📊 Attendance Data (All Users)</h3>
+    <h3>👤 Users</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="userTable"></tbody>
+    </table>
+</div>
 
-    <div class="filter-box">
-        <input class="filter" placeholder="Search User" id="fUser" onkeyup="filterData()">
-        <input class="filter" placeholder="Search Name" id="fName" onkeyup="filterData()">
-        <input class="filter" placeholder="Search College" id="fCollege" onkeyup="filterData()">
-    </div>
+<!-- 📊 ATTENDANCE -->
+<div class="section">
+    <h3>📊 Attendance Data</h3>
+
+    <input class="filter" placeholder="Search User" id="fUser" onkeyup="filterData()">
+    <input class="filter" placeholder="Search Name" id="fName" onkeyup="filterData()">
 
     <div class="stats" id="stats"></div>
 
-    <div class="table-box">
-        <table id="adminTable">
-            <thead>
-                <tr>
-                    <th>User</th>
-                    <th>University</th>
-                    <th>College</th>
-                    <th>Course</th>
-                    <th>Name</th>
-                    <th>Class</th>
-                    <th>Roll</th>
-                    <th>Present</th>
-                    <th>Absent</th>
-                    <th>%</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="attendanceTable"></tbody>
-        </table>
-    </div>
-
-    <button class="clear" onclick="clearAllAttendance()">Clear All</button>
-    <button class="export" onclick="exportCSV()">Export CSV</button>
+    <table id="adminTable">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Name</th>
+                <th>College</th>
+                <th>Course</th>
+                <th>Present</th>
+                <th>Absent</th>
+                <th>%</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="attendanceTable"></tbody>
+    </table>
 </div>
 
 <script>
 
-/* 🔐 Protect */
+/* 🔐 PROTECT */
 if(!localStorage.getItem("admin")){
     window.location.href = "login.html";
 }
 
-/* 👤 LOAD USERS */
+/* 🔄 LOAD USERS */
 function loadUsers(){
+
     let users = JSON.parse(localStorage.getItem("users")) || {};
     let output = "";
+    let approvalUI = "";
 
     let keys = Object.keys(users);
 
     if(keys.length === 0){
-        output = `<tr><td colspan="2" class="empty">No users</td></tr>`;
+        output = `<tr><td colspan="3" class="empty">No users</td></tr>`;
+        approvalUI = "No users";
     }else{
+
         keys.forEach(user => {
+
+            let isApproved = users[user].approved;
+
+            // TABLE
             output += `
             <tr>
                 <td>${user}</td>
+                <td>${isApproved ? "✅ Approved" : "❌ Pending"}</td>
                 <td>
+                    ${!isApproved ? `<button class="approve" onclick="approveUser('${user}')">Approve</button>` : ""}
                     <button class="delete" onclick="deleteUser('${user}')">Delete</button>
                 </td>
             </tr>
             `;
+
+            // APPROVAL SECTION
+            if(!isApproved){
+                approvalUI += `
+                <p>
+                    ${user} - ❌ Pending
+                    <button class="approve" onclick="approveUser('${user}')">Approve</button>
+                </p>
+                `;
+            }
         });
     }
 
-    userTable.innerHTML = output;
+    document.getElementById("userTable").innerHTML = output;
+    document.getElementById("approvalList").innerHTML = approvalUI;
+}
+
+/* ✅ APPROVE */
+function approveUser(username){
+
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+
+    users[username].approved = true;
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("✅ Approved");
+    loadUsers();
 }
 
 /* ❌ DELETE USER */
 function deleteUser(user){
 
-    if(!confirm("Delete user + all data?")) return;
+    if(!confirm("Delete user?")) return;
 
     let users = JSON.parse(localStorage.getItem("users")) || {};
     delete users[user];
     localStorage.setItem("users", JSON.stringify(users));
 
-    let all = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    all = all.filter(d => d.user !== user);
-    localStorage.setItem("allAttendance", JSON.stringify(all));
+    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    data = data.filter(d => d.user !== user);
+    localStorage.setItem("allAttendance", JSON.stringify(data));
 
     loadUsers();
     loadAttendance();
@@ -239,18 +211,17 @@ function loadAttendance(){
     let output = "";
 
     if(data.length === 0){
-        output = `<tr><td colspan="11" class="empty">No data</td></tr>`;
+        output = `<tr><td colspan="8" class="empty">No Data</td></tr>`;
     }else{
+
         data.forEach((d,i)=>{
+
             output += `
             <tr>
                 <td>${d.user}</td>
-                <td>${d.university}</td>
+                <td>${d.name}</td>
                 <td>${d.college}</td>
                 <td>${d.course}</td>
-                <td>${d.name}</td>
-                <td>${d.className}</td>
-                <td>${d.roll}</td>
                 <td>${d.present}</td>
                 <td>${d.absent}</td>
                 <td>${d.percent}</td>
@@ -262,26 +233,15 @@ function loadAttendance(){
         });
     }
 
-    attendanceTable.innerHTML = output;
-    stats.innerText = "Total Records: " + data.length;
+    document.getElementById("attendanceTable").innerHTML = output;
+    document.getElementById("stats").innerText = "Total Records: " + data.length;
 }
 
-/* ❌ DELETE SINGLE */
+/* ❌ DELETE ATTENDANCE */
 function deleteAttendance(i){
     let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    if(!confirm("Delete record?")) return;
-
     data.splice(i,1);
     localStorage.setItem("allAttendance", JSON.stringify(data));
-
-    loadAttendance();
-}
-
-/* ❌ CLEAR ALL */
-function clearAllAttendance(){
-    if(!confirm("Delete ALL data?")) return;
-
-    localStorage.removeItem("allAttendance");
     loadAttendance();
 }
 
@@ -290,41 +250,16 @@ function filterData(){
 
     let u = fUser.value.toLowerCase();
     let n = fName.value.toLowerCase();
-    let c = fCollege.value.toLowerCase();
 
     document.querySelectorAll("#attendanceTable tr").forEach(row=>{
         let td = row.cells;
 
         let match =
             td[0].innerText.toLowerCase().includes(u) &&
-            td[4].innerText.toLowerCase().includes(n) &&
-            td[2].innerText.toLowerCase().includes(c);
+            td[1].innerText.toLowerCase().includes(n);
 
         row.style.display = match ? "" : "none";
     });
-}
-
-/* 📁 EXPORT CSV */
-function exportCSV(){
-    let rows = document.querySelectorAll("#adminTable tr");
-    let csv = [];
-
-    rows.forEach(r=>{
-        let cols = r.querySelectorAll("td,th");
-        let row = [];
-
-        cols.forEach(c=>{
-            row.push(c.innerText);
-        });
-
-        csv.push(row.join(","));
-    });
-
-    let blob = new Blob([csv.join("\n")], {type:"text/csv"});
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "admin_attendance.csv";
-    a.click();
 }
 
 /* 🚪 LOGOUT */

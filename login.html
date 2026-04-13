@@ -321,17 +321,35 @@ function handleAuth(){
 
     let users = JSON.parse(localStorage.getItem("users")) || {};
 
+    /* OLD DATA FIX (important) */
+    if(typeof users[user] === "string"){
+        users[user] = {
+            password: users[user],
+            approved: true
+        };
+        localStorage.setItem("users", JSON.stringify(users));
+    }
+
     if(isLogin){
 
+        /* ADMIN LOGIN */
         if(user === "admin" && pass === "admin123"){
             localStorage.setItem("admin", "true");
             window.location.href = "admin.html";
             return;
         }
 
-        if(users[user] && users[user] === pass){
+        /* USER LOGIN */
+        if(users[user] && users[user].password === pass){
+
+            if(!users[user].approved){
+                error.innerText = "⏳ Waiting for admin approval";
+                return;
+            }
+
             localStorage.setItem("loggedInUser", user);
             window.location.href = "index.html";
+
         }else{
             error.innerText = "❌ Invalid username or password";
         }
@@ -340,12 +358,18 @@ function handleAuth(){
 
         if(users[user]){
             error.innerText = "⚠ User already exists";
-        }else{
-            users[user] = pass;
-            localStorage.setItem("users", JSON.stringify(users));
-            alert("✅ Account created successfully!");
-            toggleMode();
+            return;
         }
+
+        users[user] = {
+            password: pass,
+            approved: false
+        };
+
+        localStorage.setItem("users", JSON.stringify(users));
+
+        alert("✅ Account created! Wait for admin approval");
+        toggleMode();
     }
 }
 
@@ -356,7 +380,7 @@ document.addEventListener("keydown", function(e){
     }
 });
 
-
+/* Forgot Password */
 function forgotPassword(){
 
     let user = prompt("Enter your username:");
@@ -380,7 +404,15 @@ function forgotPassword(){
         return;
     }
 
-    users[user] = newPass;
+    /* handle both formats */
+    if(typeof users[user] === "string"){
+        users[user] = {
+            password: newPass,
+            approved: true
+        };
+    }else{
+        users[user].password = newPass;
+    }
 
     localStorage.setItem("users", JSON.stringify(users));
 
@@ -388,6 +420,5 @@ function forgotPassword(){
 }
 
 </script>
-
 </body>
 </html>
