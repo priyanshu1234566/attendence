@@ -266,3 +266,62 @@ button {
         font-size: 11px;
     }
 }
+
+
+/* 🌙 DARK MODE */
+body.dark {
+    background: #1a202c;
+    color: #e2e8f0;
+}
+
+/* Container */
+body.dark .container {
+    background: #2d3748;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* Inputs */
+body.dark input {
+    background: #1a202c;
+    color: #e2e8f0;
+    border: 1px solid #4a5568;
+}
+
+/* Table */
+body.dark table {
+    color: #e2e8f0;
+}
+
+body.dark thead {
+    background: linear-gradient(135deg,#1e3a8a,#2b6cb0);
+}
+
+body.dark tbody tr:nth-child(even) {
+    background: #2d3748;
+}
+
+/* Output Box */
+body.dark #outputBox {
+    background: #1a202c;
+}
+
+/* Buttons */
+body.dark button {
+    opacity: 0.9;
+}
+
+/* Download */
+body.dark .download {
+    background: #2d3748;
+}
+
+/* 🌙 Toggle Button Style */
+#darkToggle {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #2b6cb0;
+    color: white;
+}

@@ -3,8 +3,8 @@ let count = 0;
 /* ✅ DOM Load */
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("addBtn").addEventListener("click", addRow);
-    loadData();        // main table
-    loadOutputData();  // output table (🔥 new)
+    loadData(); 
+    // ❌ output load remove (as per your requirement)
 });
 
 /* ✅ Add Row */
@@ -46,19 +46,16 @@ function deleteRow() {
     }
 }
 
-/* ✅ Update Serial */
+/* ✅ Serial Fix */
 function updateSerial() {
-    let rows = document.querySelectorAll("#tbody tr");
-    rows.forEach((row, index) => {
-        row.cells[0].innerText = index + 1;
+    document.querySelectorAll("#tbody tr").forEach((row, i) => {
+        row.cells[0].innerText = i + 1;
     });
 }
 
 /* ✅ Calculate + Color */
 function calculate() {
-    let rows = document.querySelectorAll("#tbody tr");
-
-    rows.forEach(row => {
+    document.querySelectorAll("#tbody tr").forEach(row => {
         let checks = row.querySelectorAll(".att-check");
         let present = 0;
 
@@ -71,8 +68,7 @@ function calculate() {
             }
         });
 
-        let totalDays = checks.length;
-        let percent = totalDays ? ((present / totalDays) * 100).toFixed(0) : 0;
+        let percent = checks.length ? ((present / checks.length) * 100).toFixed(0) : 0;
 
         row.querySelector(".total").innerText = present;
         row.querySelector(".percent").innerText = percent + "%";
@@ -82,7 +78,7 @@ function calculate() {
 }
 
 /* ✅ Auto Calculate */
-document.addEventListener("change", function(e) {
+document.addEventListener("change", e => {
     if (e.target.classList.contains("att-check")) {
         calculate();
     }
@@ -90,39 +86,34 @@ document.addEventListener("change", function(e) {
 
 /* ✅ Search */
 function searchData() {
-    let input = document.getElementById("search").value.toLowerCase();
-    let rows = document.querySelectorAll("#tbody tr");
+    let val = document.getElementById("search").value.toLowerCase();
 
-    rows.forEach(row => {
+    document.querySelectorAll("#tbody tr").forEach(row => {
         let name = row.cells[1].querySelector("input").value.toLowerCase();
-        row.style.display = name.includes(input) ? "" : "none";
+        row.style.display = name.includes(val) ? "" : "none";
     });
 }
 
-/* ✅ Show Data */
+/* ✅ Show Data (ONLY ON CLICK) */
 function getHeaderData() {
 
     let university = document.getElementById("university").value || "-";
     let college = document.getElementById("college").value || "-";
     let course = document.getElementById("course").value || "-";
 
-    let rows = document.querySelectorAll("#tbody tr");
     let output = "";
 
-    rows.forEach(row => {
+    document.querySelectorAll("#tbody tr").forEach(row => {
 
         let inputs = row.querySelectorAll("input");
-
         let name = inputs[0].value.trim();
+        if (!name) return;
+
         let className = inputs[1].value.trim();
         let roll = inputs[2].value.trim();
 
-        if (!name) return;
-
         let checks = row.querySelectorAll(".att-check");
-        let present = 0;
-
-        checks.forEach(c => { if (c.checked) present++; });
+        let present = [...checks].filter(c => c.checked).length;
 
         let totalDays = checks.length;
         let absent = totalDays - present;
@@ -147,42 +138,39 @@ function getHeaderData() {
     document.getElementById("outputBody").innerHTML = output;
     document.getElementById("outputBox").style.display = "block";
 
-    saveOutputData(); // 🔥 IMPORTANT
+    saveOutputData();
 }
 
 /* ✅ Delete Output Row */
 function deleteOutputRow(btn) {
-    btn.parentElement.parentElement.remove();
-    saveOutputData(); // update storage
+    btn.closest("tr").remove();
+    saveOutputData();
 }
 
-/* ✅ Clear All Output */
+/* ✅ Clear Output */
 function clearAllData() {
     document.getElementById("outputBody").innerHTML = "";
     localStorage.removeItem("outputData");
 }
 
-/* ✅ Filter Toggle */
+/* ✅ Filter */
 function toggleFilter() {
     let box = document.getElementById("filterBox");
     box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
-/* ✅ Apply Filter */
 function applyFilter() {
-    let name = document.getElementById("filterName").value.toLowerCase();
-    let cls = document.getElementById("filterClass").value.toLowerCase();
-    let roll = document.getElementById("filterRoll").value.toLowerCase();
+    let n = filterName.value.toLowerCase();
+    let c = filterClass.value.toLowerCase();
+    let r = filterRoll.value.toLowerCase();
 
-    let rows = document.querySelectorAll("#outputBody tr");
-
-    rows.forEach(row => {
+    document.querySelectorAll("#outputBody tr").forEach(row => {
         let td = row.querySelectorAll("td");
 
         let match =
-            td[3].innerText.toLowerCase().includes(name) &&
-            td[4].innerText.toLowerCase().includes(cls) &&
-            td[5].innerText.toLowerCase().includes(roll);
+            td[3].innerText.toLowerCase().includes(n) &&
+            td[4].innerText.toLowerCase().includes(c) &&
+            td[5].innerText.toLowerCase().includes(r);
 
         row.style.display = match ? "" : "none";
     });
@@ -190,10 +178,9 @@ function applyFilter() {
 
 /* ✅ Save Main Table */
 function saveData() {
-    let rows = document.querySelectorAll("#tbody tr");
     let data = [];
 
-    rows.forEach(row => {
+    document.querySelectorAll("#tbody tr").forEach(row => {
         let inputs = row.querySelectorAll("input");
         let checks = row.querySelectorAll(".att-check");
 
@@ -201,7 +188,7 @@ function saveData() {
             name: inputs[0].value,
             className: inputs[1].value,
             roll: inputs[2].value,
-            days: Array.from(checks).map(c => c.checked)
+            days: [...checks].map(c => c.checked)
         });
     });
 
@@ -214,12 +201,11 @@ function loadData() {
     data.forEach(d => addRow(d));
 }
 
-/* ✅ Save Output Table */
+/* ✅ Save Output */
 function saveOutputData() {
-    let rows = document.querySelectorAll("#outputBody tr");
     let data = [];
 
-    rows.forEach(row => {
+    document.querySelectorAll("#outputBody tr").forEach(row => {
         let td = row.querySelectorAll("td");
 
         data.push({
@@ -238,31 +224,72 @@ function saveOutputData() {
     localStorage.setItem("outputData", JSON.stringify(data));
 }
 
-/* ✅ Load Output Table */
-function loadOutputData() {
-    let data = JSON.parse(localStorage.getItem("outputData")) || [];
+/* ✅ CSV FIXED */
+function downloadCSV() {
+    let rows = document.querySelectorAll("#table tr");
+    let csv = [];
 
-    let output = "";
+    rows.forEach(row => {
+        let cols = row.querySelectorAll("td, th");
+        let rowData = [];
 
-    data.forEach(d => {
-        output += `
-        <tr>
-            <td>${d.university}</td>
-            <td>${d.college}</td>
-            <td>${d.course}</td>
-            <td>${d.name}</td>
-            <td>${d.className}</td>
-            <td>${d.roll}</td>
-            <td>${d.present}</td>
-            <td>${d.absent}</td>
-            <td>${d.percent}</td>
-            <td><button onclick="deleteOutputRow(this)">Delete</button></td>
-        </tr>
-        `;
+        cols.forEach(col => {
+            let input = col.querySelector("input");
+
+            if (input) {
+                if (input.type === "checkbox") {
+                    rowData.push(input.checked ? "P" : "A");
+                } else {
+                    rowData.push(input.value);
+                }
+            } else {
+                rowData.push(col.innerText);
+            }
+        });
+
+        csv.push(rowData.join(","));
     });
 
-    if (data.length > 0) {
-        document.getElementById("outputBody").innerHTML = output;
-        document.getElementById("outputBox").style.display = "block";
-    }
+    let blob = new Blob([csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "attendance.csv";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
+
+/* ✅ Excel Export */
+function exportExcel() {
+    let table = document.getElementById("table");
+
+    let wb = XLSX.utils.table_to_book(table, { sheet: "Attendance" });
+
+    XLSX.writeFile(wb, "Attendance.xlsx");
+}
+
+
+
+/* 🌙 Dark Mode Toggle */
+const toggleBtn = document.getElementById("darkToggle");
+
+// Load saved theme
+if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+    toggleBtn.innerText = "☀️";
+}
+
+// Toggle click
+toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+
+    if (document.body.classList.contains("dark")) {
+        localStorage.setItem("theme", "dark");
+        toggleBtn.innerText = "☀️";
+    } else {
+        localStorage.setItem("theme", "light");
+        toggleBtn.innerText = "🌙";
+    }
+});

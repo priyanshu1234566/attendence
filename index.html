@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>College Attendance System</title>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="data:,">
 </head>
@@ -15,6 +16,7 @@
 
     <!-- Title -->
     <h2>📊 College Attendance System</h2>
+    <button id="darkToggle">🌙 Dark Mode</button>
 
     <!-- Header -->
     <div class="header">
@@ -83,6 +85,7 @@
                 <input type="text" placeholder="Filter by Roll" id="filterRoll" onkeyup="applyFilter()">
             </div>
         </div>
+        <br>
 
         <!-- Output Table -->
         <div class="table-wrapper">
@@ -108,6 +111,7 @@
         <!-- Clear -->
         <div class="clear-section">
             <button class="btn clear-btn" onclick="clearAllData()">🗑 Clear All Data</button>
+            <button onclick="exportExcel()">📊 Export Excel</button>
         </div>
 
     </div>
