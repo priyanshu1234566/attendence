@@ -116,9 +116,17 @@
 
     </div>
 
+    <button onclick="logout()">Logout</button>
+
 </div>
 
 <script src="script.js"></script>
+
+<script>
+if(!localStorage.getItem("loggedInUser")){
+    window.location.href = "login.html";
+}
+</script>
 
 </body>
 </html>

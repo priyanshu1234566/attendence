@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<style>
+body{
+    font-family: Arial;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    background:#fff;
+    padding:30px;
+    border-radius:10px;
+    width:300px;
+    text-align:center;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    background:#2b6cb0;
+    color:white;
+    border:none;
+    cursor:pointer;
+}
+
+.toggle{
+    margin-top:10px;
+    cursor:pointer;
+    color:#2b6cb0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2 id="title">Login</h2>
+
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="handleAuth()">Login</button>
+
+    <div class="toggle" onclick="toggleMode()">Create Account</div>
+</div>
+
+<script>
+let isLogin = true;
+
+function toggleMode(){
+    isLogin = !isLogin;
+    document.getElementById("title").innerText = isLogin ? "Login" : "Signup";
+    document.querySelector("button").innerText = isLogin ? "Login" : "Signup";
+    document.querySelector(".toggle").innerText = isLogin ? "Create Account" : "Already have account?";
+}
+
+function handleAuth(){
+    let user = username.value.trim();
+    let pass = password.value.trim();
+
+    if(!user || !pass){
+        alert("Fill all fields");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+
+    if(isLogin){
+        if(users[user] && users[user] === pass){
+            localStorage.setItem("loggedInUser", user);
+            window.location.href = "index.html";
+        }else{
+            alert("Invalid credentials");
+        }
+    }else{
+        if(users[user]){
+            alert("User already exists");
+        }else{
+            users[user] = pass;
+            localStorage.setItem("users", JSON.stringify(users));
+            alert("Account created!");
+            toggleMode();
+        }
+    }
+}
+</script>
+
+</body>
+</html>
