@@ -5,14 +5,12 @@
 <title>Admin Panel</title>
 
 <style>
-/* RESET */
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
 
-/* BODY */
 body{
     font-family: Arial;
     background:#0f172a;
@@ -20,7 +18,7 @@ body{
     padding:20px;
 }
 
-/* HEADER */
+/* TOP BAR */
 .topbar{
     display:flex;
     justify-content:space-between;
@@ -29,7 +27,7 @@ body{
 }
 
 h2{
-    text-align:center;
+    font-size:22px;
 }
 
 /* BUTTONS */
@@ -38,30 +36,31 @@ button{
     border:none;
     cursor:pointer;
     border-radius:6px;
+    transition:0.2s;
 }
 
 .delete{
     background:#ef4444;
     color:white;
 }
-
-.delete:hover{
-    background:#dc2626;
-}
+.delete:hover{ background:#dc2626; }
 
 .logout{
     background:#3b82f6;
     color:white;
 }
-
-.logout:hover{
-    background:#2563eb;
-}
+.logout:hover{ background:#2563eb; }
 
 .clear{
     background:#f59e0b;
     color:white;
     margin-top:10px;
+}
+
+.export{
+    background:#10b981;
+    color:white;
+    margin-left:10px;
 }
 
 /* TABLE */
@@ -86,11 +85,16 @@ th,td{
     text-align:center;
 }
 
-/* INPUT FILTER */
-.filter{
+/* FILTER */
+.filter-box{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
     margin-top:10px;
+}
+
+.filter{
     padding:8px;
-    width:250px;
     border-radius:6px;
     border:none;
 }
@@ -108,6 +112,12 @@ th,td{
     text-align:center;
     padding:15px;
     color:#94a3b8;
+}
+
+/* STATS */
+.stats{
+    margin-top:10px;
+    color:#38bdf8;
 }
 </style>
 </head>
@@ -140,10 +150,16 @@ th,td{
 <div class="section">
     <h3>📊 Attendance Data (All Users)</h3>
 
-    <input class="filter" type="text" placeholder="Search by Username..." id="searchUser" onkeyup="filterData()">
+    <div class="filter-box">
+        <input class="filter" placeholder="Search User" id="fUser" onkeyup="filterData()">
+        <input class="filter" placeholder="Search Name" id="fName" onkeyup="filterData()">
+        <input class="filter" placeholder="Search College" id="fCollege" onkeyup="filterData()">
+    </div>
+
+    <div class="stats" id="stats"></div>
 
     <div class="table-box">
-        <table>
+        <table id="adminTable">
             <thead>
                 <tr>
                     <th>User</th>
@@ -163,17 +179,18 @@ th,td{
         </table>
     </div>
 
-    <button class="clear" onclick="clearAllAttendance()">Clear All Attendance</button>
+    <button class="clear" onclick="clearAllAttendance()">Clear All</button>
+    <button class="export" onclick="exportCSV()">Export CSV</button>
 </div>
 
 <script>
 
-/* ✅ Protect Admin Page */
+/* 🔐 Protect */
 if(!localStorage.getItem("admin")){
     window.location.href = "login.html";
 }
 
-/* ✅ Load Users */
+/* 👤 LOAD USERS */
 function loadUsers(){
     let users = JSON.parse(localStorage.getItem("users")) || {};
     let output = "";
@@ -181,7 +198,7 @@ function loadUsers(){
     let keys = Object.keys(users);
 
     if(keys.length === 0){
-        output = `<tr><td colspan="2" class="empty">No users found</td></tr>`;
+        output = `<tr><td colspan="2" class="empty">No users</td></tr>`;
     }else{
         keys.forEach(user => {
             output += `
@@ -195,36 +212,36 @@ function loadUsers(){
         });
     }
 
-    document.getElementById("userTable").innerHTML = output;
+    userTable.innerHTML = output;
 }
 
-/* ✅ Delete User */
+/* ❌ DELETE USER */
 function deleteUser(user){
 
-    if(!confirm("Delete user " + user + " ?")) return;
+    if(!confirm("Delete user + all data?")) return;
 
     let users = JSON.parse(localStorage.getItem("users")) || {};
     delete users[user];
     localStorage.setItem("users", JSON.stringify(users));
 
-    // 🔥 remove attendance also
-    let allData = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    allData = allData.filter(d => d.user !== user);
-    localStorage.setItem("allAttendance", JSON.stringify(allData));
+    let all = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    all = all.filter(d => d.user !== user);
+    localStorage.setItem("allAttendance", JSON.stringify(all));
 
     loadUsers();
     loadAttendance();
 }
 
-/* ✅ Load Attendance */
+/* 📊 LOAD ATTENDANCE */
 function loadAttendance(){
+
     let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
     let output = "";
 
     if(data.length === 0){
-        output = `<tr><td colspan="11" class="empty">No attendance data</td></tr>`;
+        output = `<tr><td colspan="11" class="empty">No data</td></tr>`;
     }else{
-        data.forEach((d, index) => {
+        data.forEach((d,i)=>{
             output += `
             <tr>
                 <td>${d.user}</td>
@@ -236,50 +253,81 @@ function loadAttendance(){
                 <td>${d.roll}</td>
                 <td>${d.present}</td>
                 <td>${d.absent}</td>
-                <td>${d.percent}%</td>
+                <td>${d.percent}</td>
                 <td>
-                    <button class="delete" onclick="deleteAttendance(${index})">Delete</button>
+                    <button class="delete" onclick="deleteAttendance(${i})">Delete</button>
                 </td>
             </tr>
             `;
         });
     }
 
-    document.getElementById("attendanceTable").innerHTML = output;
+    attendanceTable.innerHTML = output;
+    stats.innerText = "Total Records: " + data.length;
 }
 
-/* ✅ Delete Single Attendance Row */
-function deleteAttendance(index){
+/* ❌ DELETE SINGLE */
+function deleteAttendance(i){
     let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    if(!confirm("Delete record?")) return;
 
-    if(!confirm("Delete this record?")) return;
-
-    data.splice(index, 1);
+    data.splice(i,1);
     localStorage.setItem("allAttendance", JSON.stringify(data));
 
     loadAttendance();
 }
 
-/* ✅ Clear All Attendance */
+/* ❌ CLEAR ALL */
 function clearAllAttendance(){
-    if(!confirm("Delete ALL attendance data?")) return;
+    if(!confirm("Delete ALL data?")) return;
 
     localStorage.removeItem("allAttendance");
     loadAttendance();
 }
 
-/* ✅ Filter */
+/* 🔍 FILTER */
 function filterData(){
-    let val = document.getElementById("searchUser").value.toLowerCase();
-    let rows = document.querySelectorAll("#attendanceTable tr");
 
-    rows.forEach(row => {
-        let user = row.cells[0]?.innerText.toLowerCase();
-        row.style.display = user && user.includes(val) ? "" : "none";
+    let u = fUser.value.toLowerCase();
+    let n = fName.value.toLowerCase();
+    let c = fCollege.value.toLowerCase();
+
+    document.querySelectorAll("#attendanceTable tr").forEach(row=>{
+        let td = row.cells;
+
+        let match =
+            td[0].innerText.toLowerCase().includes(u) &&
+            td[4].innerText.toLowerCase().includes(n) &&
+            td[2].innerText.toLowerCase().includes(c);
+
+        row.style.display = match ? "" : "none";
     });
 }
 
-/* ✅ Logout */
+/* 📁 EXPORT CSV */
+function exportCSV(){
+    let rows = document.querySelectorAll("#adminTable tr");
+    let csv = [];
+
+    rows.forEach(r=>{
+        let cols = r.querySelectorAll("td,th");
+        let row = [];
+
+        cols.forEach(c=>{
+            row.push(c.innerText);
+        });
+
+        csv.push(row.join(","));
+    });
+
+    let blob = new Blob([csv.join("\n")], {type:"text/csv"});
+    let a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "admin_attendance.csv";
+    a.click();
+}
+
+/* 🚪 LOGOUT */
 function logout(){
     localStorage.removeItem("admin");
     window.location.href = "login.html";

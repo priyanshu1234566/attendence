@@ -62,6 +62,11 @@ button:hover{
     color:#2b6cb0;
     font-size:14px;
 }
+
+.error{
+    color:red;
+    font-size:13px;
+}
 </style>
 </head>
 
@@ -73,6 +78,8 @@ button:hover{
     <input type="text" id="username" placeholder="Username">
     <input type="password" id="password" placeholder="Password">
 
+    <div class="error" id="errorMsg"></div>
+
     <button onclick="handleAuth()">Login</button>
 
     <div class="toggle" onclick="toggleMode()">Create Account</div>
@@ -82,6 +89,14 @@ button:hover{
 
 let isLogin = true;
 
+/* ✅ Auto Redirect if already logged in */
+if(localStorage.getItem("admin")){
+    window.location.href = "admin.html";
+}
+if(localStorage.getItem("loggedInUser")){
+    window.location.href = "index.html";
+}
+
 /* 🔄 Toggle Login/Signup */
 function toggleMode(){
     isLogin = !isLogin;
@@ -89,6 +104,7 @@ function toggleMode(){
     document.getElementById("title").innerText = isLogin ? "Login" : "Signup";
     document.querySelector("button").innerText = isLogin ? "Login" : "Signup";
     document.querySelector(".toggle").innerText = isLogin ? "Create Account" : "Already have account?";
+    document.getElementById("errorMsg").innerText = "";
 }
 
 /* 🔐 Auth System */
@@ -96,9 +112,10 @@ function handleAuth(){
 
     let user = document.getElementById("username").value.trim();
     let pass = document.getElementById("password").value.trim();
+    let error = document.getElementById("errorMsg");
 
     if(!user || !pass){
-        alert("Fill all fields");
+        error.innerText = "⚠ Please fill all fields";
         return;
     }
 
@@ -106,7 +123,7 @@ function handleAuth(){
 
     if(isLogin){
 
-        /* ✅ ADMIN LOGIN */
+        /* 🔥 ADMIN LOGIN */
         if(user === "admin" && pass === "admin123"){
             localStorage.setItem("admin", "true");
             localStorage.removeItem("loggedInUser");
@@ -114,28 +131,35 @@ function handleAuth(){
             return;
         }
 
-        /* ✅ USER LOGIN */
+        /* 👤 USER LOGIN */
         if(users[user] && users[user] === pass){
             localStorage.setItem("loggedInUser", user);
             localStorage.removeItem("admin");
             window.location.href = "index.html";
         }else{
-            alert("Invalid username or password");
+            error.innerText = "❌ Invalid username or password";
         }
 
     }else{
 
-        /* ✅ SIGNUP */
+        /* 🆕 SIGNUP */
         if(users[user]){
-            alert("User already exists");
+            error.innerText = "⚠ User already exists";
         }else{
             users[user] = pass;
             localStorage.setItem("users", JSON.stringify(users));
-            alert("Account created successfully!");
+            alert("✅ Account created successfully!");
             toggleMode();
         }
     }
 }
+
+/* ⌨ Enter key support */
+document.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){
+        handleAuth();
+    }
+});
 
 </script>
 
