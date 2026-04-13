@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Admin Panel</title>
+
+<style>
+/* RESET */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+/* BODY */
+body{
+    font-family: Arial;
+    background:#0f172a;
+    color:#fff;
+    padding:20px;
+}
+
+/* HEADER */
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+h2{
+    text-align:center;
+}
+
+/* BUTTONS */
+button{
+    padding:8px 12px;
+    border:none;
+    cursor:pointer;
+    border-radius:6px;
+}
+
+.delete{
+    background:#ef4444;
+    color:white;
+}
+
+.delete:hover{
+    background:#dc2626;
+}
+
+.logout{
+    background:#3b82f6;
+    color:white;
+}
+
+.logout:hover{
+    background:#2563eb;
+}
+
+.clear{
+    background:#f59e0b;
+    color:white;
+    margin-top:10px;
+}
+
+/* TABLE */
+.table-box{
+    overflow-x:auto;
+    margin-top:15px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:900px;
+}
+
+th{
+    background:#1e293b;
+}
+
+th,td{
+    border:1px solid #334155;
+    padding:10px;
+    text-align:center;
+}
+
+/* INPUT FILTER */
+.filter{
+    margin-top:10px;
+    padding:8px;
+    width:250px;
+    border-radius:6px;
+    border:none;
+}
+
+/* SECTION */
+.section{
+    margin-top:30px;
+    padding:15px;
+    background:#1e293b;
+    border-radius:10px;
+}
+
+/* EMPTY */
+.empty{
+    text-align:center;
+    padding:15px;
+    color:#94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <h2>⚙️ Admin Panel</h2>
+    <button class="logout" onclick="logout()">Logout</button>
+</div>
+
+<!-- USERS -->
+<div class="section">
+    <h3>👤 Users</h3>
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="userTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ATTENDANCE -->
+<div class="section">
+    <h3>📊 Attendance Data (All Users)</h3>
+
+    <input class="filter" type="text" placeholder="Search by Username..." id="searchUser" onkeyup="filterData()">
+
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>University</th>
+                    <th>College</th>
+                    <th>Course</th>
+                    <th>Name</th>
+                    <th>Class</th>
+                    <th>Roll</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>%</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceTable"></tbody>
+        </table>
+    </div>
+
+    <button class="clear" onclick="clearAllAttendance()">Clear All Attendance</button>
+</div>
+
+<script>
+
+/* ✅ Protect Admin Page */
+if(!localStorage.getItem("admin")){
+    window.location.href = "login.html";
+}
+
+/* ✅ Load Users */
+function loadUsers(){
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+    let output = "";
+
+    let keys = Object.keys(users);
+
+    if(keys.length === 0){
+        output = `<tr><td colspan="2" class="empty">No users found</td></tr>`;
+    }else{
+        keys.forEach(user => {
+            output += `
+            <tr>
+                <td>${user}</td>
+                <td>
+                    <button class="delete" onclick="deleteUser('${user}')">Delete</button>
+                </td>
+            </tr>
+            `;
+        });
+    }
+
+    document.getElementById("userTable").innerHTML = output;
+}
+
+/* ✅ Delete User */
+function deleteUser(user){
+
+    if(!confirm("Delete user " + user + " ?")) return;
+
+    let users = JSON.parse(localStorage.getItem("users")) || {};
+    delete users[user];
+    localStorage.setItem("users", JSON.stringify(users));
+
+    // 🔥 remove attendance also
+    let allData = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    allData = allData.filter(d => d.user !== user);
+    localStorage.setItem("allAttendance", JSON.stringify(allData));
+
+    loadUsers();
+    loadAttendance();
+}
+
+/* ✅ Load Attendance */
+function loadAttendance(){
+    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    let output = "";
+
+    if(data.length === 0){
+        output = `<tr><td colspan="11" class="empty">No attendance data</td></tr>`;
+    }else{
+        data.forEach((d, index) => {
+            output += `
+            <tr>
+                <td>${d.user}</td>
+                <td>${d.university}</td>
+                <td>${d.college}</td>
+                <td>${d.course}</td>
+                <td>${d.name}</td>
+                <td>${d.className}</td>
+                <td>${d.roll}</td>
+                <td>${d.present}</td>
+                <td>${d.absent}</td>
+                <td>${d.percent}%</td>
+                <td>
+                    <button class="delete" onclick="deleteAttendance(${index})">Delete</button>
+                </td>
+            </tr>
+            `;
+        });
+    }
+
+    document.getElementById("attendanceTable").innerHTML = output;
+}
+
+/* ✅ Delete Single Attendance Row */
+function deleteAttendance(index){
+    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
+
+    if(!confirm("Delete this record?")) return;
+
+    data.splice(index, 1);
+    localStorage.setItem("allAttendance", JSON.stringify(data));
+
+    loadAttendance();
+}
+
+/* ✅ Clear All Attendance */
+function clearAllAttendance(){
+    if(!confirm("Delete ALL attendance data?")) return;
+
+    localStorage.removeItem("allAttendance");
+    loadAttendance();
+}
+
+/* ✅ Filter */
+function filterData(){
+    let val = document.getElementById("searchUser").value.toLowerCase();
+    let rows = document.querySelectorAll("#attendanceTable tr");
+
+    rows.forEach(row => {
+        let user = row.cells[0]?.innerText.toLowerCase();
+        row.style.display = user && user.includes(val) ? "" : "none";
+    });
+}
+
+/* ✅ Logout */
+function logout(){
+    localStorage.removeItem("admin");
+    window.location.href = "login.html";
+}
+
+/* INIT */
+loadUsers();
+loadAttendance();
+
+</script>
+
+</body>
+</html>
