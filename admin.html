@@ -2,42 +2,94 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Admin Panel</title>
+<title>Pro Admin Dashboard</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 
 body{
-    font-family: Arial;
+    font-family:'Segoe UI',sans-serif;
     background:#0f172a;
-    color:#fff;
+    color:#e2e8f0;
+    display:flex;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:240px;
+    height:100vh;
+    background:#020617;
     padding:20px;
 }
 
+.sidebar img{
+    width:60px;
+    display:block;
+    margin:0 auto 10px;
+}
+
+.sidebar h2{
+    text-align:center;
+    color:#38bdf8;
+    margin-bottom:30px;
+}
+
+.sidebar a{
+    display:block;
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:6px;
+    color:#cbd5f5;
+    cursor:pointer;
+}
+
+.sidebar a:hover{background:#1e293b;}
+.sidebar a.active{
+    background:#38bdf8;
+    color:#020617;
+}
+
+/* MAIN */
+.main{
+    flex:1;
+    padding:20px;
+}
+
+/* TOPBAR */
 .topbar{
     display:flex;
+    align-items:center;
     justify-content:space-between;
     margin-bottom:20px;
 }
 
-button{
-    padding:8px 12px;
-    border:none;
+.menuBtn{
+    font-size:22px;
     cursor:pointer;
-    border-radius:6px;
 }
 
-.delete{background:#ef4444;color:#fff;}
-.approve{background:#22c55e;color:#fff;}
-.logout{background:#3b82f6;color:#fff;}
+/* CARDS */
+.cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:15px;
+}
 
-.section{
-    margin-top:20px;
-    padding:15px;
+.card{
     background:#1e293b;
+    padding:20px;
     border-radius:10px;
 }
 
+/* SECTION */
+.section{
+    margin-top:20px;
+    background:#1e293b;
+    padding:20px;
+    border-radius:10px;
+}
+
+/* TABLE */
 table{
     width:100%;
     border-collapse:collapse;
@@ -45,224 +97,251 @@ table{
 }
 
 th,td{
-    border:1px solid #334155;
     padding:10px;
     text-align:center;
 }
 
-th{background:#111827;}
+th{
+    background:#020617;
+    color:#38bdf8;
+}
 
-.empty{color:#94a3b8;text-align:center;padding:10px;}
+tr:nth-child(even){
+    background:#0f172a;
+}
 
+/* BUTTON */
+button{
+    padding:6px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.delete{background:#ef4444;color:#fff;}
+.approve{background:#22c55e;color:#fff;}
+
+/* FILTER */
 .filter{
     padding:8px;
-    margin-right:10px;
-    border-radius:5px;
+    margin:5px;
+    border-radius:6px;
     border:none;
 }
 
-.stats{
-    margin-top:10px;
-    color:#38bdf8;
-}
+/* PAGES */
+.page{display:none;}
+.page.activePage{display:block;}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN PROTECTION -->
+<script>
+if(!localStorage.getItem("admin")){
+    window.location.href = "login.html";
+}
+</script>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+
+    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+
+    <h2>Admin</h2>
+
+    <a onclick="showSection('dashboard')" class="active">📊 Dashboard</a>
+    <a onclick="showSection('users')">👤 Users</a>
+    <a onclick="showSection('approval')">✅ Approval</a>
+    <a onclick="showSection('attendance')">📋 Attendance</a>
+    <a onclick="logout()">🚪 Logout</a>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
 <div class="topbar">
-    <h2>⚙️ Admin Panel</h2>
-    <button class="logout" onclick="logout()">Logout</button>
+    <span class="menuBtn" onclick="toggleSidebar()">☰</span>
+    <h2>⚙️ Admin Dashboard</h2>
 </div>
 
-<!-- 🔥 APPROVAL SECTION -->
-<div class="section">
-    <h3>📌 User Approval</h3>
-    <div id="approvalList"></div>
+<!-- DASHBOARD -->
+<div id="dashboard" class="page activePage">
+    <div class="cards">
+        <div class="card"><h3>Total Users</h3><p id="totalUsers">0</p></div>
+        <div class="card"><h3>Pending</h3><p id="pendingUsers">0</p></div>
+        <div class="card"><h3>Records</h3><p id="totalRecords">0</p></div>
+    </div>
 </div>
 
-<!-- 👤 USERS TABLE -->
-<div class="section">
-    <h3>👤 Users</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Username</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="userTable"></tbody>
-    </table>
+<!-- USERS -->
+<div id="users" class="page">
+    <div class="section">
+        <h3>Users</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="userTable"></tbody>
+        </table>
+    </div>
 </div>
 
-<!-- 📊 ATTENDANCE -->
-<div class="section">
-    <h3>📊 Attendance Data</h3>
+<!-- APPROVAL -->
+<div id="approval" class="page">
+    <div class="section">
+        <h3>Pending Approvals</h3>
+        <div id="approvalList"></div>
+    </div>
+</div>
 
-    <input class="filter" placeholder="Search User" id="fUser" onkeyup="filterData()">
-    <input class="filter" placeholder="Search Name" id="fName" onkeyup="filterData()">
+<!-- ATTENDANCE -->
+<div id="attendance" class="page">
+    <div id="attendanceTable"></div>
+</div>
 
-    <div class="stats" id="stats"></div>
-
-    <table id="adminTable">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Name</th>
-                <th>College</th>
-                <th>Course</th>
-                <th>Present</th>
-                <th>Absent</th>
-                <th>%</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="attendanceTable"></tbody>
-    </table>
 </div>
 
 <script>
 
-/* 🔐 PROTECT */
-if(!localStorage.getItem("admin")){
-    window.location.href = "login.html";
+/* SIDEBAR TOGGLE */
+function toggleSidebar(){
+    let s = document.getElementById("sidebar");
+    s.style.display = s.style.display === "none" ? "block" : "none";
 }
 
-/* 🔄 LOAD USERS */
+/* NAVIGATION */
+function showSection(id){
+    document.querySelectorAll(".page").forEach(p=>p.classList.remove("activePage"));
+    document.getElementById(id).classList.add("activePage");
+}
+
+/* USERS */
 function loadUsers(){
-
     let users = JSON.parse(localStorage.getItem("users")) || {};
-    let output = "";
-    let approvalUI = "";
-
     let keys = Object.keys(users);
 
-    if(keys.length === 0){
-        output = `<tr><td colspan="3" class="empty">No users</td></tr>`;
-        approvalUI = "No users";
-    }else{
+    let output="", approvalUI="";
 
-        keys.forEach(user => {
+    document.getElementById("totalUsers").innerText = keys.length;
+    document.getElementById("pendingUsers").innerText =
+        keys.filter(u=>!users[u].approved).length;
 
-            let isApproved = users[user].approved;
+    keys.forEach(user=>{
+        let isApproved = users[user].approved;
 
-            // TABLE
-            output += `
-            <tr>
-                <td>${user}</td>
-                <td>${isApproved ? "✅ Approved" : "❌ Pending"}</td>
-                <td>
-                    ${!isApproved ? `<button class="approve" onclick="approveUser('${user}')">Approve</button>` : ""}
-                    <button class="delete" onclick="deleteUser('${user}')">Delete</button>
-                </td>
-            </tr>
-            `;
+        output += `
+        <tr>
+            <td>${user}</td>
+            <td>${isApproved?"✅ Approved":"❌ Pending"}</td>
+            <td>
+                ${!isApproved?`<button class="approve" onclick="approveUser('${user}')">Approve</button>`:""}
+                <button class="delete" onclick="deleteUser('${user}')">Delete</button>
+            </td>
+        </tr>`;
 
-            // APPROVAL SECTION
-            if(!isApproved){
-                approvalUI += `
-                <p>
-                    ${user} - ❌ Pending
-                    <button class="approve" onclick="approveUser('${user}')">Approve</button>
-                </p>
-                `;
-            }
-        });
-    }
+        if(!isApproved){
+            approvalUI += `${user} ❌ <button class="approve" onclick="approveUser('${user}')">Approve</button><br>`;
+        }
+    });
 
     document.getElementById("userTable").innerHTML = output;
-    document.getElementById("approvalList").innerHTML = approvalUI;
+    document.getElementById("approvalList").innerHTML = approvalUI || "No pending users";
 }
 
-/* ✅ APPROVE */
-function approveUser(username){
-
-    let users = JSON.parse(localStorage.getItem("users")) || {};
-
-    users[username].approved = true;
+/* APPROVE */
+function approveUser(u){
+    let users = JSON.parse(localStorage.getItem("users"))||{};
+    users[u].approved = true;
     localStorage.setItem("users", JSON.stringify(users));
-
-    alert("✅ Approved");
     loadUsers();
 }
 
-/* ❌ DELETE USER */
-function deleteUser(user){
-
-    if(!confirm("Delete user?")) return;
-
-    let users = JSON.parse(localStorage.getItem("users")) || {};
-    delete users[user];
+/* DELETE USER */
+function deleteUser(u){
+    let users = JSON.parse(localStorage.getItem("users"))||{};
+    delete users[u];
     localStorage.setItem("users", JSON.stringify(users));
-
-    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    data = data.filter(d => d.user !== user);
-    localStorage.setItem("allAttendance", JSON.stringify(data));
-
     loadUsers();
-    loadAttendance();
 }
 
-/* 📊 LOAD ATTENDANCE */
+/* ATTENDANCE (USER-WISE TABLES) */
 function loadAttendance(){
 
     let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    let output = "";
+    let container = document.getElementById("attendanceTable");
+
+    document.getElementById("totalRecords").innerText = data.length;
 
     if(data.length === 0){
-        output = `<tr><td colspan="8" class="empty">No Data</td></tr>`;
-    }else{
+        container.innerHTML = "<p>No Data Available</p>";
+        return;
+    }
 
-        data.forEach((d,i)=>{
+    let grouped = {};
 
+    data.forEach(d=>{
+        if(!grouped[d.user]){
+            grouped[d.user] = [];
+        }
+        grouped[d.user].push(d);
+    });
+
+    let output = "";
+
+    Object.keys(grouped).forEach(user=>{
+
+        output += `
+        <div class="section">
+            <h3>👤 ${user}</h3>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>University</th>
+                        <th>College</th>
+                        <th>Course</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Roll No</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        grouped[user].forEach(d=>{
             output += `
             <tr>
-                <td>${d.user}</td>
-                <td>${d.name}</td>
-                <td>${d.college}</td>
-                <td>${d.course}</td>
-                <td>${d.present}</td>
-                <td>${d.absent}</td>
-                <td>${d.percent}</td>
-                <td>
-                    <button class="delete" onclick="deleteAttendance(${i})">Delete</button>
-                </td>
+                <td>${d.university || "-"}</td>
+                <td>${d.college || "-"}</td>
+                <td>${d.course || "-"}</td>
+                <td>${d.name || "-"}</td>
+                <td>${d.class || "-"}</td>
+                <td>${d.roll || "-"}</td>
+                <td>${d.present || 0}</td>
+                <td>${d.absent || 0}</td>
             </tr>
             `;
         });
-    }
 
-    document.getElementById("attendanceTable").innerHTML = output;
-    document.getElementById("stats").innerText = "Total Records: " + data.length;
-}
-
-/* ❌ DELETE ATTENDANCE */
-function deleteAttendance(i){
-    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    data.splice(i,1);
-    localStorage.setItem("allAttendance", JSON.stringify(data));
-    loadAttendance();
-}
-
-/* 🔍 FILTER */
-function filterData(){
-
-    let u = fUser.value.toLowerCase();
-    let n = fName.value.toLowerCase();
-
-    document.querySelectorAll("#attendanceTable tr").forEach(row=>{
-        let td = row.cells;
-
-        let match =
-            td[0].innerText.toLowerCase().includes(u) &&
-            td[1].innerText.toLowerCase().includes(n);
-
-        row.style.display = match ? "" : "none";
+        output += `
+                </tbody>
+            </table>
+        </div>
+        `;
     });
+
+    container.innerHTML = output;
 }
 
-/* 🚪 LOGOUT */
+/* LOGOUT */
 function logout(){
     localStorage.removeItem("admin");
     window.location.href = "login.html";
