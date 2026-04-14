@@ -32,6 +32,16 @@ function addRow(data = {}) {
     calculate();
 }
 
+/* ✅ DELETE LAST ROW */
+function deleteRow() {
+    let tbody = document.getElementById("tbody");
+    if (tbody.lastChild) {
+        tbody.removeChild(tbody.lastChild);
+        count--;
+        calculate();
+    }
+}
+
 /* ✅ Calculate */
 function calculate() {
     document.querySelectorAll("#tbody tr").forEach(row => {
@@ -56,7 +66,7 @@ document.addEventListener("change", e => {
     if (e.target.classList.contains("att-check")) calculate();
 });
 
-/* ✅ Save Main Table (User Wise) */
+/* ✅ Save Table */
 function saveData() {
     let user = localStorage.getItem("loggedInUser");
     if (!user) return;
@@ -78,16 +88,19 @@ function saveData() {
     localStorage.setItem("attendance_" + user, JSON.stringify(data));
 }
 
-/* ✅ Load Main Table */
+/* ✅ Load Data */
 function loadData() {
     let user = localStorage.getItem("loggedInUser");
     if (!user) return;
 
     let data = JSON.parse(localStorage.getItem("attendance_" + user)) || [];
+
+    count = 0;
+    document.getElementById("tbody").innerHTML = "";
     data.forEach(d => addRow(d));
 }
 
-/* ✅ Show Data (IMPORTANT) */
+/* ✅ SHOW DATA */
 function getHeaderData() {
 
     let user = localStorage.getItem("loggedInUser");
@@ -97,6 +110,7 @@ function getHeaderData() {
     let course = document.getElementById("course").value || "-";
 
     let output = [];
+    let today = new Date().toISOString().split("T")[0];
 
     document.querySelectorAll("#tbody tr").forEach(row => {
 
@@ -110,12 +124,13 @@ function getHeaderData() {
         let checks = row.querySelectorAll(".att-check");
         let present = [...checks].filter(c => c.checked).length;
 
-        let totalDays = checks.length;
-        let absent = totalDays - present;
-        let percent = ((present / totalDays) * 100).toFixed(0);
+        let total = checks.length;
+        let absent = total - present;
+        let percent = total ? ((present / total) * 100).toFixed(0) : 0;
 
         output.push({
             user,
+            date: today,
             university,
             college,
             course,
@@ -136,7 +151,7 @@ function getHeaderData() {
 function renderOutput(data) {
     let html = "";
 
-    data.forEach(d => {
+    data.forEach((d, i) => {
         html += `
         <tr>
             <td>${d.university}</td>
@@ -148,33 +163,74 @@ function renderOutput(data) {
             <td>${d.present}</td>
             <td>${d.absent}</td>
             <td>${d.percent}%</td>
-            <td><button onclick="deleteOutputRow(this)">Delete</button></td>
-        </tr>
-        `;
+            <td>${d.date}</td>
+            <td><button onclick="deleteOutputRow(${i})">Delete</button></td>
+        </tr>`;
     });
 
     document.getElementById("outputBody").innerHTML = html;
     document.getElementById("outputBox").style.display = "block";
 }
 
-/* ✅ Save Output (ALL USERS) */
+/* ✅ Save All Data */
 function saveOutputData(newData) {
-
     let allData = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    let user = localStorage.getItem("loggedInUser");
-
-    // Remove old data of this user
-    allData = allData.filter(d => d.user !== user);
-
-    // Add new data
     allData.push(...newData);
-
     localStorage.setItem("allAttendance", JSON.stringify(allData));
 }
 
-/* ✅ Delete Output Row */
-function deleteOutputRow(btn) {
-    btn.closest("tr").remove();
+/* ✅ DELETE OUTPUT ROW */
+function deleteOutputRow(index) {
+    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
+    data.splice(index, 1);
+    localStorage.setItem("allAttendance", JSON.stringify(data));
+    getHeaderData();
+}
+
+/* ✅ CLEAR ALL */
+function clearAllData() {
+    if (confirm("Delete all data?")) {
+        localStorage.removeItem("allAttendance");
+        document.getElementById("outputBody").innerHTML = "";
+    }
+}
+
+/* ✅ SEARCH */
+function searchData() {
+    let value = document.getElementById("search").value.toLowerCase();
+    document.querySelectorAll("#tbody tr").forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+    });
+}
+
+/* ✅ FILTER */
+function toggleFilter() {
+    let box = document.getElementById("filterBox");
+    box.style.display = box.style.display === "block" ? "none" : "block";
+}
+
+function applyFilter() {
+    let name = document.getElementById("filterName").value.toLowerCase();
+    let cls = document.getElementById("filterClass").value.toLowerCase();
+    let roll = document.getElementById("filterRoll").value.toLowerCase();
+
+    document.querySelectorAll("#outputBody tr").forEach(row => {
+        let text = row.innerText.toLowerCase();
+
+        row.style.display =
+            text.includes(name) &&
+            text.includes(cls) &&
+            text.includes(roll)
+                ? ""
+                : "none";
+    });
+}
+
+/* ✅ EXPORT EXCEL */
+function exportExcel() {
+    let table = document.getElementById("outputTable");
+    let wb = XLSX.utils.table_to_book(table, { sheet: "Attendance" });
+    XLSX.writeFile(wb, "attendance.xlsx");
 }
 
 /* ✅ CSV */
@@ -211,26 +267,17 @@ function downloadCSV() {
     a.click();
 }
 
-/* 🌙 Dark Mode */
+/* 🌙 DARK MODE */
 const toggleBtn = document.getElementById("darkToggle");
 
 if (toggleBtn) {
-    if (localStorage.getItem("theme") === "dark") {
-        document.body.classList.add("dark");
-        toggleBtn.innerText = "☀️";
-    }
-
     toggleBtn.addEventListener("click", () => {
         document.body.classList.toggle("dark");
-
-        let isDark = document.body.classList.contains("dark");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
-        toggleBtn.innerText = isDark ? "☀️" : "🌙";
     });
 }
 
-/* ✅ Logout */
-function logout(){
+/* ✅ LOGOUT */
+function logout() {
     localStorage.removeItem("loggedInUser");
     window.location.href = "login.html";
 }

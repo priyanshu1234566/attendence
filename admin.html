@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pro Admin Dashboard</title>
+<title>Admin Dashboard</title>
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -20,12 +20,7 @@ body{
     height:100vh;
     background:#020617;
     padding:20px;
-}
-
-.sidebar img{
-    width:60px;
-    display:block;
-    margin:0 auto 10px;
+    position:fixed;
 }
 
 .sidebar h2{
@@ -37,41 +32,33 @@ body{
 .sidebar a{
     display:block;
     padding:12px;
-    margin-bottom:10px;
+    margin:10px 0;
     border-radius:6px;
-    color:#cbd5f5;
     cursor:pointer;
 }
-
-.sidebar a:hover{background:#1e293b;}
-.sidebar a.active{
-    background:#38bdf8;
-    color:#020617;
+.sidebar a:hover{
+    background:#1e293b;
 }
 
 /* MAIN */
 .main{
-    flex:1;
+    margin-left:240px;
+    width:100%;
     padding:20px;
 }
 
 /* TOPBAR */
 .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+    background:#1e293b;
+    padding:15px;
+    border-radius:10px;
     margin-bottom:20px;
-}
-
-.menuBtn{
-    font-size:22px;
-    cursor:pointer;
 }
 
 /* CARDS */
 .cards{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
     gap:15px;
 }
 
@@ -95,17 +82,14 @@ table{
     border-collapse:collapse;
     margin-top:10px;
 }
-
 th,td{
     padding:10px;
     text-align:center;
 }
-
 th{
     background:#020617;
     color:#38bdf8;
 }
-
 tr:nth-child(even){
     background:#0f172a;
 }
@@ -117,19 +101,10 @@ button{
     border-radius:6px;
     cursor:pointer;
 }
+.delete{ background:#ef4444;color:#fff; }
+.approve{ background:#22c55e;color:#fff; }
 
-.delete{background:#ef4444;color:#fff;}
-.approve{background:#22c55e;color:#fff;}
-
-/* FILTER */
-.filter{
-    padding:8px;
-    margin:5px;
-    border-radius:6px;
-    border:none;
-}
-
-/* PAGES */
+/* PAGE */
 .page{display:none;}
 .page.activePage{display:block;}
 </style>
@@ -137,41 +112,45 @@ button{
 
 <body>
 
-<!-- LOGIN PROTECTION -->
 <script>
 if(!localStorage.getItem("admin")){
-    window.location.href = "login.html";
+    window.location.href="login.html";
 }
 </script>
 
 <!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-
-    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
-
+<div class="sidebar">
     <h2>Admin</h2>
 
-    <a onclick="showSection('dashboard')" class="active">📊 Dashboard</a>
-    <a onclick="showSection('users')">👤 Users</a>
-    <a onclick="showSection('approval')">✅ Approval</a>
-    <a onclick="showSection('attendance')">📋 Attendance</a>
-    <a onclick="logout()">🚪 Logout</a>
+    <a onclick="showSection('dashboard')">Dashboard</a>
+    <a onclick="showSection('users')">Users</a>
+    <a onclick="showSection('approval')">Approval</a>
+    <a onclick="showSection('attendance')">Attendance</a>
+    <a onclick="logout()">Logout</a>
 </div>
 
 <!-- MAIN -->
 <div class="main">
 
 <div class="topbar">
-    <span class="menuBtn" onclick="toggleSidebar()">☰</span>
-    <h2>⚙️ Admin Dashboard</h2>
+    <h2>Admin Dashboard</h2>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard" class="page activePage">
     <div class="cards">
-        <div class="card"><h3>Total Users</h3><p id="totalUsers">0</p></div>
-        <div class="card"><h3>Pending</h3><p id="pendingUsers">0</p></div>
-        <div class="card"><h3>Records</h3><p id="totalRecords">0</p></div>
+        <div class="card">
+            <h3>Total Users</h3>
+            <p id="totalUsers">0</p>
+        </div>
+        <div class="card">
+            <h3>Pending</h3>
+            <p id="pendingUsers">0</p>
+        </div>
+        <div class="card">
+            <h3>Total Records</h3>
+            <p id="totalRecords">0</p>
+        </div>
     </div>
 </div>
 
@@ -195,7 +174,7 @@ if(!localStorage.getItem("admin")){
 <!-- APPROVAL -->
 <div id="approval" class="page">
     <div class="section">
-        <h3>Pending Approvals</h3>
+        <h3>Pending Approval</h3>
         <div id="approvalList"></div>
     </div>
 </div>
@@ -209,96 +188,100 @@ if(!localStorage.getItem("admin")){
 
 <script>
 
-/* SIDEBAR TOGGLE */
-function toggleSidebar(){
-    let s = document.getElementById("sidebar");
-    s.style.display = s.style.display === "none" ? "block" : "none";
-}
-
 /* NAVIGATION */
 function showSection(id){
     document.querySelectorAll(".page").forEach(p=>p.classList.remove("activePage"));
     document.getElementById(id).classList.add("activePage");
 }
 
-/* USERS */
+/* LOAD USERS */
 function loadUsers(){
-    let users = JSON.parse(localStorage.getItem("users")) || {};
+    let users = JSON.parse(localStorage.getItem("users"))||{};
     let keys = Object.keys(users);
 
-    let output="", approvalUI="";
+    let output="";
+    let approvalUI="";
 
     document.getElementById("totalUsers").innerText = keys.length;
     document.getElementById("pendingUsers").innerText =
-        keys.filter(u=>!users[u].approved).length;
+        keys.filter(u=>!users[u]?.approved).length;
 
-    keys.forEach(user=>{
-        let isApproved = users[user].approved;
+    keys.forEach(u=>{
+        let isApproved = users[u]?.approved;
 
-        output += `
+        output+=`
         <tr>
-            <td>${user}</td>
+            <td>${u}</td>
             <td>${isApproved?"✅ Approved":"❌ Pending"}</td>
             <td>
-                ${!isApproved?`<button class="approve" onclick="approveUser('${user}')">Approve</button>`:""}
-                <button class="delete" onclick="deleteUser('${user}')">Delete</button>
+                ${!isApproved?`<button class="approve" onclick="approveUser('${u}')">Approve</button>`:""}
+                <button class="delete" onclick="deleteUser('${u}')">Delete</button>
             </td>
         </tr>`;
 
         if(!isApproved){
-            approvalUI += `${user} ❌ <button class="approve" onclick="approveUser('${user}')">Approve</button><br>`;
+            approvalUI += `${u} ❌ 
+            <button class="approve" onclick="approveUser('${u}')">Approve</button><br>`;
         }
     });
 
     document.getElementById("userTable").innerHTML = output;
-    document.getElementById("approvalList").innerHTML = approvalUI || "No pending users";
+    document.getElementById("approvalList").innerHTML =
+        approvalUI || "No Pending Users";
 }
 
 /* APPROVE */
 function approveUser(u){
     let users = JSON.parse(localStorage.getItem("users"))||{};
-    users[u].approved = true;
-    localStorage.setItem("users", JSON.stringify(users));
-    loadUsers();
+    if(users[u]){
+        users[u].approved = true;
+        localStorage.setItem("users",JSON.stringify(users));
+        loadUsers();
+    }
 }
 
 /* DELETE USER */
 function deleteUser(u){
-    let users = JSON.parse(localStorage.getItem("users"))||{};
+    let users=JSON.parse(localStorage.getItem("users"))||{};
     delete users[u];
-    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("users",JSON.stringify(users));
     loadUsers();
 }
 
-/* ATTENDANCE (USER-WISE TABLES) */
+/* ATTENDANCE */
 function loadAttendance(){
 
-    let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    let container = document.getElementById("attendanceTable");
+    let data=JSON.parse(localStorage.getItem("allAttendance"))||[];
+    let container=document.getElementById("attendanceTable");
 
-    document.getElementById("totalRecords").innerText = data.length;
+    document.getElementById("totalRecords").innerText=data.length;
 
-    if(data.length === 0){
-        container.innerHTML = "<p>No Data Available</p>";
+    if(data.length===0){
+        container.innerHTML="<p>No Data Available</p>";
         return;
     }
 
-    let grouped = {};
+    let grouped={};
 
-    data.forEach(d=>{
-        if(!grouped[d.user]){
-            grouped[d.user] = [];
-        }
-        grouped[d.user].push(d);
+    data.forEach((d,i)=>{
+        let date=d.date || "No Date";
+
+        if(!grouped[d.user]) grouped[d.user]={};
+        if(!grouped[d.user][date]) grouped[d.user][date]=[];
+
+        grouped[d.user][date].push({...d,index:i});
     });
 
-    let output = "";
+    let output="";
 
     Object.keys(grouped).forEach(user=>{
 
-        output += `
-        <div class="section">
-            <h3>👤 ${user}</h3>
+        output+=`<div class="section"><h2>${user}</h2>`;
+
+        Object.keys(grouped[user]).forEach(date=>{
+
+            output+=`
+            <h4>${date}</h4>
 
             <table>
                 <thead>
@@ -308,43 +291,52 @@ function loadAttendance(){
                         <th>Course</th>
                         <th>Name</th>
                         <th>Class</th>
-                        <th>Roll No</th>
+                        <th>Roll</th>
                         <th>Present</th>
                         <th>Absent</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
-        `;
+                <tbody>`;
 
-        grouped[user].forEach(d=>{
-            output += `
-            <tr>
-                <td>${d.university || "-"}</td>
-                <td>${d.college || "-"}</td>
-                <td>${d.course || "-"}</td>
-                <td>${d.name || "-"}</td>
-                <td>${d.class || "-"}</td>
-                <td>${d.roll || "-"}</td>
-                <td>${d.present || 0}</td>
-                <td>${d.absent || 0}</td>
-            </tr>
-            `;
+            grouped[user][date].forEach(d=>{
+                output+=`
+                <tr>
+                    <td>${d.university||"-"}</td>
+                    <td>${d.college||"-"}</td>
+                    <td>${d.course||"-"}</td>
+                    <td>${d.name||"-"}</td>
+                    <td>${d.className||"-"}</td>
+                    <td>${d.roll||"-"}</td>
+                    <td>${d.present||0}</td>
+                    <td>${d.absent||0}</td>
+                    <td>
+                        <button class="delete" onclick="deleteAttendance(${d.index})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+
+            output+=`</tbody></table>`;
         });
 
-        output += `
-                </tbody>
-            </table>
-        </div>
-        `;
+        output+=`</div>`;
     });
 
-    container.innerHTML = output;
+    container.innerHTML=output;
+}
+
+/* DELETE ATTENDANCE */
+function deleteAttendance(i){
+    let data=JSON.parse(localStorage.getItem("allAttendance"))||[];
+    data.splice(i,1);
+    localStorage.setItem("allAttendance",JSON.stringify(data));
+    loadAttendance();
 }
 
 /* LOGOUT */
 function logout(){
     localStorage.removeItem("admin");
-    window.location.href = "login.html";
+    window.location.href="login.html";
 }
 
 /* INIT */
