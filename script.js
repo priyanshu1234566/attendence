@@ -19,9 +19,7 @@ function addRow(data = {}) {
         <td><input type="text" value="${data.roll || ''}"></td>
 
         ${[0,1,2,3,4,5].map(i => `
-            <td>
-                <input type="checkbox" class="att-check" ${data.days?.[i] ? "checked" : ""}>
-            </td>
+            <td><input type="checkbox" class="att-check" ${data.days?.[i] ? "checked" : ""}></td>
         `).join("")}
 
         <td class="total">0</td>
@@ -100,7 +98,7 @@ function loadData() {
     data.forEach(d => addRow(d));
 }
 
-/* ✅ SHOW DATA */
+/* ✅ SHOW DATA (NO DUPLICATE SAVE) */
 function getHeaderData() {
 
     let user = localStorage.getItem("loggedInUser");
@@ -129,6 +127,7 @@ function getHeaderData() {
         let percent = total ? ((present / total) * 100).toFixed(0) : 0;
 
         output.push({
+            id: Date.now() + Math.random(), // ✅ UNIQUE ID
             user,
             date: today,
             university,
@@ -151,7 +150,7 @@ function getHeaderData() {
 function renderOutput(data) {
     let html = "";
 
-    data.forEach((d, i) => {
+    data.forEach(d => {
         html += `
         <tr>
             <td>${d.university}</td>
@@ -164,7 +163,9 @@ function renderOutput(data) {
             <td>${d.absent}</td>
             <td>${d.percent}%</td>
             <td>${d.date}</td>
-            <td><button onclick="deleteOutputRow(${i})">Delete</button></td>
+            <td>
+                <button onclick="deleteOutputRow('${d.id}')">Delete</button>
+            </td>
         </tr>`;
     });
 
@@ -179,12 +180,17 @@ function saveOutputData(newData) {
     localStorage.setItem("allAttendance", JSON.stringify(allData));
 }
 
-/* ✅ DELETE OUTPUT ROW */
-function deleteOutputRow(index) {
+/* ✅ DELETE OUTPUT ROW (FIXED PERFECT) */
+function deleteOutputRow(id) {
+
     let data = JSON.parse(localStorage.getItem("allAttendance")) || [];
-    data.splice(index, 1);
+
+    data = data.filter(d => d.id != id);
+
     localStorage.setItem("allAttendance", JSON.stringify(data));
-    getHeaderData();
+
+    // refresh UI without duplicating
+    renderOutput(data);
 }
 
 /* ✅ CLEAR ALL */
@@ -269,7 +275,6 @@ function downloadCSV() {
 
 /* 🌙 DARK MODE */
 const toggleBtn = document.getElementById("darkToggle");
-
 if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
         document.body.classList.toggle("dark");
